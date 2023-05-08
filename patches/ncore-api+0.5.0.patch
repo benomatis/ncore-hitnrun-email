@@ -1,0 +1,330 @@
+diff --git a/node_modules/ncore-api/lib/crawlers/hitnrun_page/index.js b/node_modules/ncore-api/lib/crawlers/hitnrun_page/index.js
+new file mode 100644
+index 0000000..e07473f
+--- /dev/null
++++ b/node_modules/ncore-api/lib/crawlers/hitnrun_page/index.js
+@@ -0,0 +1,74 @@
++const findTitle = require('./parsers/find_title');
++const findStart = require('./parsers/find_start');
++const findLastactive = require('./parsers/find_lastactive');
++const findStopped = require('./parsers/find_stopped');
++const findUp = require('./parsers/find_up');
++const findDown = require('./parsers/find_down');
++
++module.exports = () => {
++  const titleFinder = findTitle();
++  const startFinder = findStart();
++  const lastactiveFinder = findLastactive();
++  const stoppedFinder = findStopped();
++  const upFinder = findUp();
++  const downFinder = findDown();
++
++  return {
++    onopentag(name, attribs) {
++      titleFinder.onopentag(name, attribs);
++      startFinder.onopentag(name, attribs);
++      lastactiveFinder.onopentag(name, attribs);
++      stoppedFinder.onopentag(name, attribs);
++      upFinder.onopentag(name, attribs);
++      downFinder.onopentag(name, attribs);
++    },
++    ontext(text) {
++      startFinder.ontext(text);
++      lastactiveFinder.ontext(text);
++      stoppedFinder.ontext(text);
++      upFinder.ontext(text);
++      downFinder.ontext(text);
++    },
++    getResults() {
++      const title = titleFinder.getValue();
++      const start = startFinder.getValue();
++      const lastactive = lastactiveFinder.getValue();
++      const up = upFinder.getValue();
++      const down = downFinder.getValue();
++
++      const stopped = stoppedFinder.getValue().reduce(
++        (coll, stop, i) => {
++          switch (i % 3) {
++            case 0:
++              coll.status.push(stop);
++              break;
++            case 1:
++              coll.remaining.push(stop);
++              break;
++            case 2:
++              coll.ratio.push(stop);
++              break;
++            default:
++              break;
++          }
++
++          return coll;
++        },
++        {
++          status: [],
++          remaining: [],
++          ratio: [],
++        }
++      );
++
++      return {
++        title,
++        start,
++        lastactive,
++        up,
++        down,
++        ...stopped,
++      };
++    },
++  };
++};
+diff --git a/node_modules/ncore-api/lib/crawlers/hitnrun_page/parsers/find_down.js b/node_modules/ncore-api/lib/crawlers/hitnrun_page/parsers/find_down.js
+new file mode 100644
+index 0000000..1b48740
+--- /dev/null
++++ b/node_modules/ncore-api/lib/crawlers/hitnrun_page/parsers/find_down.js
+@@ -0,0 +1,21 @@
++module.exports = () => {
++  let match = 0;
++  const value = [];
++
++  return {
++    onopentag(name, attribs) {
++      if (name === 'div' && attribs.class && attribs.class === 'hnr_tdown') {
++        match = 1;
++      }
++    },
++    ontext(text) {
++      if (match) {
++        match = 0;
++        value.push(text);
++      }
++    },
++    getValue() {
++      return value;
++    },
++  };
++};
+diff --git a/node_modules/ncore-api/lib/crawlers/hitnrun_page/parsers/find_lastactive.js b/node_modules/ncore-api/lib/crawlers/hitnrun_page/parsers/find_lastactive.js
+new file mode 100644
+index 0000000..8daaf41
+--- /dev/null
++++ b/node_modules/ncore-api/lib/crawlers/hitnrun_page/parsers/find_lastactive.js
+@@ -0,0 +1,25 @@
++module.exports = () => {
++  let match = 0;
++  const value = [];
++
++  return {
++    onopentag(name, attribs) {
++      if (
++        name === 'div' &&
++        attribs.class &&
++        attribs.class === 'hnr_tlastactive'
++      ) {
++        match = 1;
++      }
++    },
++    ontext(text) {
++      if (match) {
++        match = 0;
++        value.push(text);
++      }
++    },
++    getValue() {
++      return value;
++    },
++  };
++};
+diff --git a/node_modules/ncore-api/lib/crawlers/hitnrun_page/parsers/find_start.js b/node_modules/ncore-api/lib/crawlers/hitnrun_page/parsers/find_start.js
+new file mode 100644
+index 0000000..3f87bf6
+--- /dev/null
++++ b/node_modules/ncore-api/lib/crawlers/hitnrun_page/parsers/find_start.js
+@@ -0,0 +1,21 @@
++module.exports = () => {
++  let match = 0;
++  const value = [];
++
++  return {
++    onopentag(name, attribs) {
++      if (name === 'div' && attribs.class && attribs.class === 'hnr_tstart') {
++        match = 1;
++      }
++    },
++    ontext(text) {
++      if (match) {
++        match = 0;
++        value.push(text);
++      }
++    },
++    getValue() {
++      return value;
++    },
++  };
++};
+diff --git a/node_modules/ncore-api/lib/crawlers/hitnrun_page/parsers/find_stopped.js b/node_modules/ncore-api/lib/crawlers/hitnrun_page/parsers/find_stopped.js
+new file mode 100644
+index 0000000..20d0031
+--- /dev/null
++++ b/node_modules/ncore-api/lib/crawlers/hitnrun_page/parsers/find_stopped.js
+@@ -0,0 +1,22 @@
++module.exports = () => {
++  let match = 0;
++  const value = [];
++
++  return {
++    onopentag(name, attribs) {
++      if (name === 'span' && attribs.class && attribs.class === 'stopped') {
++        match = 1;
++      }
++    },
++    ontext(text) {
++      if (match) {
++        match = 0;
++
++        value.push(text);
++      }
++    },
++    getValue() {
++      return value;
++    },
++  };
++};
+diff --git a/node_modules/ncore-api/lib/crawlers/hitnrun_page/parsers/find_title.js b/node_modules/ncore-api/lib/crawlers/hitnrun_page/parsers/find_title.js
+new file mode 100644
+index 0000000..43d0544
+--- /dev/null
++++ b/node_modules/ncore-api/lib/crawlers/hitnrun_page/parsers/find_title.js
+@@ -0,0 +1,18 @@
++module.exports = () => {
++  const value = [];
++
++  return {
++    onopentag(name, attribs) {
++      if (
++        name === 'a' &&
++        /torrents.php\?action=details&id=/.test(attribs.href) &&
++        attribs.title
++      ) {
++        value.push(attribs.title);
++      }
++    },
++    getValue() {
++      return value;
++    },
++  };
++};
+diff --git a/node_modules/ncore-api/lib/crawlers/hitnrun_page/parsers/find_up.js b/node_modules/ncore-api/lib/crawlers/hitnrun_page/parsers/find_up.js
+new file mode 100644
+index 0000000..048173c
+--- /dev/null
++++ b/node_modules/ncore-api/lib/crawlers/hitnrun_page/parsers/find_up.js
+@@ -0,0 +1,21 @@
++module.exports = () => {
++  let match = 0;
++  const value = [];
++
++  return {
++    onopentag(name, attribs) {
++      if (name === 'div' && attribs.class && attribs.class === 'hnr_tup') {
++        match = 1;
++      }
++    },
++    ontext(text) {
++      if (match) {
++        match = 0;
++        value.push(text);
++      }
++    },
++    getValue() {
++      return value;
++    },
++  };
++};
+diff --git a/node_modules/ncore-api/lib/ncore_client.js b/node_modules/ncore-api/lib/ncore_client.js
+index 63cddc5..bbb1da8 100644
+--- a/node_modules/ncore-api/lib/ncore_client.js
++++ b/node_modules/ncore-api/lib/ncore_client.js
+@@ -15,6 +15,9 @@ module.exports = async function createProviderClient({
+   const { get, post } = await createHttpClient({ url, username, password });
+ 
+   return {
++    getHitNRunQuery: () => {
++      return get('hitnrun.php');
++    },
+     getTorrents: ({ searchParams, body }) => {
+       const request = body ? post : get;
+       return request('torrents.php', { searchParams, body });
+diff --git a/node_modules/ncore-api/lib/scraper.js b/node_modules/ncore-api/lib/scraper.js
+index 6094075..c276caa 100644
+--- a/node_modules/ncore-api/lib/scraper.js
++++ b/node_modules/ncore-api/lib/scraper.js
+@@ -1,5 +1,6 @@
+ const htmlparser2 = require('htmlparser2');
+ const createClient = require('./ncore_client');
++const makeHitNRunParser = require('./crawlers/hitnrun_page');
+ const makeListParser = require('./crawlers/list_page');
+ const makeDetailParser = require('./crawlers/detail_page');
+ const makeVersionsParser = require('./crawlers/versions_page');
+@@ -14,6 +15,60 @@ module.exports = async function makeScraper(options = {}) {
+   });
+ 
+   return {
++    getHitNRun() {
++      const hitNRunParser = makeHitNRunParser();
++      const hitNRunDetails = client.getHitNRunQuery();
++
++      return new Promise((resolve, reject) => {
++        const parser = new htmlparser2.Parser(hitNRunParser, {
++          decodeEntities: true,
++        });
++
++        hitNRunDetails.on('data', chunk => {
++          parser.write(chunk);
++        });
++
++        hitNRunDetails.on('end', () => {
++          parser.end();
++          const {
++            title,
++            start,
++            lastactive,
++            status,
++            up,
++            down,
++            remaining,
++            ratio,
++          } = hitNRunParser.getResults();
++
++          resolve(
++            combiner(
++              [
++                'title',
++                'start',
++                'lastactive',
++                'status',
++                'up',
++                'down',
++                'remaining',
++                'ratio',
++              ],
++              title,
++              start,
++              lastactive,
++              status,
++              up,
++              down,
++              remaining,
++              ratio
++            )
++          );
++        });
++        hitNRunDetails.on('error', error => {
++          reject(error);
++        });
++      });
++    },
+     getMovies(filters) {
+       const listPageParser = makeListParser();
+       const detailStream = client.getTorrents(client.getMoviesQuery(filters));
