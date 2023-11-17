@@ -14,7 +14,7 @@ const textOnStatus = status => {
       break
     case 'removed':
       statusText = 'has an item REMOVED'
-      actionText = 'you may stop seeding'
+      actionText = 'you may stop seeding the following torrents:'
       break
     case 'empty':
       statusText = 'now EMPTY'
@@ -59,7 +59,7 @@ const transformTitles = title => {
   ]
   
   if (status === 'removed') {
-    textParts.push(`'${removed.length <= 1 ? removed[0] : removed.join('\', \'')}'`)
+    textParts.push(`\n'${removed.join('\',\n\'')}'`)
   }
   
   const text = `${textParts.join(' ')}!`
