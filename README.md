@@ -22,7 +22,7 @@ Fork this repo, then add environment variables under Repository Settings > Secre
 | EMAIL_SENDER_PASSWORD  | The password used to authenticate to your email sending provider* |                                                 
 | EMAIL_SENDER_RECIPIENT | The email address you want the notifications to go to             |
 
-_* I recommend using [Zoho](https://go.zoho.com/xEA) Mail as the email sender. Would you choose to go with them, you can find more info on settings on [the Zoho Mail Admin Console](https://mailadmin.zoho.eu/cpanel/home.do#mailSettings/toolsAndConfiguration/configurations) and [the relevant help article](https://www.zoho.com/mail/help/zoho-smtp.html). Note that while this will all work with a fee account, if you purchase something from Zoho using [this link](https://go.zoho.com/xEA), I do receive credit from your first purchase ([Zoho's referral program is described here](https://www.zoho.com/r/refer-a-friend.html))._
+_* I recommend using [Zoho](https://go.zoho.com/xEA) Mail as the email sender. Would you choose to go with them, you can find more info on settings on [the Zoho Mail Admin Console](https://mailadmin.zoho.eu/cpanel/home.do#mailSettings/toolsAndConfiguration/configurations) and [the relevant help article](https://www.zoho.com/mail/help/zoho-smtp.html). Note that while this will all work with a free account, if you purchase something from Zoho using [this link](https://go.zoho.com/xEA), I do receive credit from your first purchase ([Zoho's referral program is described here](https://www.zoho.com/r/refer-a-friend.html))._
 
 ### Change schedule / triggering event
 
