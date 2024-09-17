@@ -1,0 +1,55 @@
+name: Query and email
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/30 * * * *'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  query-and-email:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifact
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: query_and_email.yml
+          workflow_conclusion: success
+      - name: Get output from artifact
+        id: hitnrun-prev
+        run: |
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "titles<<$EOF" >> $GITHUB_OUTPUT
+          echo "$(cat prev_run/titles.txt)" >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          cache: 'yarn'
+      - name: Install yarn packages
+        run: yarn
+      - name: Query hit'n'run list on ncore and output result
+        id: hitnrun-curr
+        continue-on-error: true
+        env:
+          NCORE_USERNAME: ${{ secrets.NCORE_USERNAME }}
+          NCORE_PASSWORD: ${{ secrets.NCORE_PASSWORD }}
+        run: yarn run ncore-query-hitnrun
+      - name: Save titles to file
+        run: echo "${{steps.hitnrun-curr.outputs.titles}}" > titles.txt
+      - name: Upload titles file
+        uses: actions/upload-artifact@v4
+        with:
+          name: prev_run
+          path: titles.txt
+      - name: Send email
+        env:
+          EMAIL_SENDER_HOST: ${{ secrets.EMAIL_SENDER_HOST }}
+          EMAIL_SENDER_USER: ${{ secrets.EMAIL_SENDER_USER }}
+          EMAIL_SENDER_RECIPIENT: ${{ secrets.EMAIL_SENDER_RECIPIENT }}
+          EMAIL_SENDER_PASSWORD: ${{ secrets.EMAIL_SENDER_PASSWORD }}
+          TITLES_PREV: ${{steps.hitnrun-prev.outputs.titles}}
+          TITLES_CURR: ${{steps.hitnrun-curr.outputs.titles}}
+        run: yarn run send-email
